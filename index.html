@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Lab - Banco de Dados</title>
+
+  <!-- SQL.js: SQLite rodando diretamente no navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/sql-wasm.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 0 20px;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    h1 { margin-bottom: 5px; }
+    h2 { margin-top: 0; }
+
+    .box {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      box-sizing: border-box;
+      font-family: Consolas, monospace;
+      font-size: 15px;
+      padding: 12px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 10px 18px;
+      margin-top: 10px;
+      cursor: pointer;
+      border: 1px solid #aaa;
+      border-radius: 5px;
+      background: #eee;
+    }
+
+    button:hover {
+      background: #ddd;
+    }
+
+    .questao {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .dica {
+      background: #fff8d8;
+      padding: 10px;
+      margin: 10px 0;
+      border-left: 4px solid #d6b600;
+    }
+
+    .sucesso {
+      color: #087f23;
+      margin: 8px 0;
+    }
+
+    .erro {
+      color: #b00020;
+      margin: 8px 0;
+    }
+
+    .info {
+      color: #555;
+      margin: 8px 0;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 10px;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    .navegacao {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .contador {
+      font-weight: bold;
+    }
+
+    code {
+      background: #eee;
+      padding: 2px 5px;
+    }
+
+    #status {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>SQL Lab</h1>
+  <p>Digite comandos SQL e verifique sua resposta.</p>
+
+  <div class="box">
+    <h2 id="titulo"></h2>
+
+    <div class="questao" id="enunciado"></div>
+
+    <div class="dica">
+      <strong>Dica:</strong>
+      <span id="dica"></span>
+    </div>
+
+    <textarea id="sql" placeholder="Digite seu comando SQL aqui..."></textarea>
+
+    <br>
+
+    <button onclick="executar()">Executar SQL</button>
+    <button onclick="verificar()">Verificar resposta</button>
+
+    <div id="mensagem"></div>
+  </div>
+
+  <div class="box">
+    <h2>Resultado da consulta</h2>
+    <div id="resultado">
+      Execute um SELECT para visualizar os dados.
+    </div>
+  </div>
+
+  <div class="box">
+    <h2>Testes</h2>
+    <div id="testes">
+      A resposta ainda não foi verificada.
+    </div>
+
+    <div class="navegacao">
+      <button onclick="anterior()">Anterior</button>
+
+      <span class="contador" id="contador"></span>
+
+      <button onclick="proxima()">Próxima</button>
+    </div>
+  </div>
+
+
+<script>
+
+let SQL;
+let db;
+
+let questaoAtual = 0;
+
+
+/*
+==========================================================
+BANCO DE DADOS
+==========================================================
+*/
+
+const bancoInicial = `
+
+CREATE TABLE produto (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL,
+    categoria TEXT NOT NULL,
+    preco REAL NOT NULL,
+    estoque INTEGER NOT NULL
+);
+
+CREATE TABLE cliente (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL,
+    cidade TEXT NOT NULL
+);
+
+CREATE TABLE venda (
+    id INTEGER PRIMARY KEY,
+    produto_id INTEGER,
+    cliente_id INTEGER,
+    quantidade INTEGER,
+    data TEXT,
+    FOREIGN KEY (produto_id) REFERENCES produto(id),
+    FOREIGN KEY (cliente_id) REFERENCES cliente(id)
+);
+
+
+INSERT INTO produto VALUES
+(1, 'Teclado', 'Periferico', 120, 10),
+(2, 'Mouse', 'Periferico', 80, 25),
+(3, 'Monitor', 'Hardware', 850, 4),
+(4, 'Headset', 'Periferico', 180, 8),
+(5, 'Notebook', 'Computador', 3200, 3),
+(6, 'Webcam', 'Periferico', 250, 12),
+(7, 'SSD 480GB', 'Hardware', 300, 6),
+(8, 'Cadeira Gamer', 'Moveis', 1100, 2),
+(9, 'Microfone', 'Audio', 450, 5),
+(10, 'HD 1TB', 'Hardware', 280, 9);
+
+
+INSERT INTO cliente VALUES
+(1, 'Ana', 'Brasilia'),
+(2, 'Bruno', 'Goiania'),
+(3, 'Carlos', 'Brasilia'),
+(4, 'Daniela', 'Sao Paulo'),
+(5, 'Eduardo', 'Brasilia'),
+(6, 'Fernanda', 'Belo Horizonte'),
+(7, 'Gabriel', 'Goiania'),
+(8, 'Helena', 'Brasilia');
+
+
+INSERT INTO venda VALUES
+(1, 1, 1, 2, '2026-10-01'),
+(2, 2, 2, 3, '2026-10-02'),
+(3, 3, 3, 1, '2026-10-03'),
+(4, 4, 1, 2, '2026-10-04'),
+(5, 5, 4, 1, '2026-10-05'),
+(6, 6, 5, 2, '2026-10-06'),
+(7, 7, 6, 1, '2026-10-07'),
+(8, 8, 7, 1, '2026-10-08'),
+(9, 9, 8, 2, '2026-10-09'),
+(10, 10, 2, 3, '2026-10-10');
+
+`;
+
+
+/*
+==========================================================
+QUESTÕES
+==========================================================
+*/
+
+const questoes = [
+
+  {
+    titulo: "Questão 1 - Todos os produtos",
+
+    enunciado:
+      "Liste todos os registros da tabela produto.",
+
+    dica:
+      "Utilize SELECT para consultar a tabela produto.",
+
+    esperado: {
+      colunas: ["id", "nome", "categoria", "preco", "estoque"],
+      valores: [
+        [1,"Teclado","Periferico",120,10],
+        [2,"Mouse","Periferico",80,25],
+        [3,"Monitor","Hardware",850,4],
+        [4,"Headset","Periferico",180,8],
+        [5,"Notebook","Computador",3200,3],
+        [6,"Webcam","Periferico",250,12],
+        [7,"SSD 480GB","Hardware",300,6],
+        [8,"Cadeira Gamer","Moveis",1100,2],
+        [9,"Microfone","Audio",450,5],
+        [10,"HD 1TB","Hardware",280,9]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 2 - Apenas nome e preço",
+
+    enunciado:
+      "Liste somente o nome e o preço de todos os produtos.",
+
+    dica:
+      "Depois do SELECT informe somente as colunas que deseja visualizar.",
+
+    esperado: {
+      colunas: ["nome", "preco"],
+      valores: [
+        ["Teclado",120],
+        ["Mouse",80],
+        ["Monitor",850],
+        ["Headset",180],
+        ["Notebook",3200],
+        ["Webcam",250],
+        ["SSD 480GB",300],
+        ["Cadeira Gamer",1100],
+        ["Microfone",450],
+        ["HD 1TB",280]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 3 - Produtos caros",
+
+    enunciado:
+      "Liste nome e preço dos produtos que custam mais de 300 reais.",
+
+    dica:
+      "Utilize WHERE e o operador >.",
+
+    esperado: {
+      colunas: ["nome", "preco"],
+      valores: [
+        ["Monitor",850],
+        ["Notebook",3200],
+        ["Cadeira Gamer",1100],
+        ["Microfone",450]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 4 - Estoque baixo",
+
+    enunciado:
+      "Liste o nome e o estoque dos produtos que possuem menos de 5 unidades.",
+
+    dica:
+      "Utilize WHERE com o operador <.",
+
+    esperado: {
+      colunas: ["nome", "estoque"],
+      valores: [
+        ["Monitor",4],
+        ["Notebook",3],
+        ["Cadeira Gamer",2]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 5 - Produtos de uma categoria",
+
+    enunciado:
+      "Liste todos os produtos da categoria Periferico.",
+
+    dica:
+      "Compare a coluna categoria com o texto 'Periferico'.",
+
+    esperado: {
+      colunas: ["id","nome","categoria","preco","estoque"],
+      valores: [
+        [1,"Teclado","Periferico",120,10],
+        [2,"Mouse","Periferico",80,25],
+        [4,"Headset","Periferico",180,8],
+        [6,"Webcam","Periferico",250,12]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 6 - Ordenando produtos",
+
+    enunciado:
+      "Liste nome e preço dos produtos ordenados do mais barato para o mais caro.",
+
+    dica:
+      "Utilize ORDER BY.",
+
+    esperado: {
+      colunas: ["nome","preco"],
+      valores: [
+        ["Mouse",80],
+        ["Teclado",120],
+        ["Headset",180],
+        ["Webcam",250],
+        ["HD 1TB",280],
+        ["SSD 480GB",300],
+        ["Microfone",450],
+        ["Monitor",850],
+        ["Cadeira Gamer",1100],
+        ["Notebook",3200]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 7 - Os três mais baratos",
+
+    enunciado:
+      "Liste os três produtos mais baratos, mostrando nome e preço.",
+
+    dica:
+      "Combine ORDER BY com LIMIT.",
+
+    esperado: {
+      colunas: ["nome","preco"],
+      valores: [
+        ["Mouse",80],
+        ["Teclado",120],
+        ["Headset",180]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 8 - Clientes de Brasilia",
+
+    enunciado:
+      "Liste o nome dos clientes que moram em Brasilia.",
+
+    dica:
+      "Utilize WHERE para filtrar a cidade.",
+
+    esperado: {
+      colunas: ["nome"],
+      valores: [
+        ["Ana"],
+        ["Carlos"],
+        ["Eduardo"],
+        ["Helena"]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 9 - Contagem de produtos",
+
+    enunciado:
+      "Descubra quantos produtos existem na tabela produto.",
+
+    dica:
+      "Utilize COUNT.",
+
+    esperado: {
+      colunas: ["quantidade"],
+      valores: [
+        [10]
+      ]
+    }
+  },
+
+
+  {
+    titulo: "Questão 10 - Produtos e categorias",
+
+    enunciado:
+      "Liste as categorias existentes na tabela produto, sem repetir categorias.",
+
+    dica:
+      "Utilize DISTINCT.",
+
+    esperado: {
+      colunas: ["categoria"],
+      valores: [
+        ["Periferico"],
+        ["Hardware"],
+        ["Computador"],
+        ["Moveis"],
+        ["Audio"]
+      ]
+    }
+  }
+
+];
+
+
+/*
+==========================================================
+INICIALIZAÇÃO
+==========================================================
+*/
+
+async function iniciarBanco() {
+
+  const SQLConfig = {
+    locateFile: file =>
+      `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/${file}`
+  };
+
+  SQL = await initSqlJs(SQLConfig);
+
+  criarBanco();
+
+  mostrarQuestao();
+
+  document.getElementById("status").textContent = "Banco pronto.";
+}
+
+
+function criarBanco() {
+
+  db = new SQL.Database();
+
+  db.run(bancoInicial);
+}
+
+
+/*
+==========================================================
+MOSTRAR QUESTÃO
+==========================================================
+*/
+
+function mostrarQuestao() {
+
+  const q = questoes[questaoAtual];
+
+  document.getElementById("titulo").textContent = q.titulo;
+  document.getElementById("enunciado").textContent = q.enunciado;
+  document.getElementById("dica").textContent = q.dica;
+
+  document.getElementById("contador").textContent =
+    `Questão ${questaoAtual + 1} de ${questoes.length}`;
+
+  document.getElementById("sql").value = "";
+
+  document.getElementById("mensagem").innerHTML = "";
+
+  document.getElementById("testes").innerHTML =
+    "A resposta ainda não foi verificada.";
+
+  document.getElementById("resultado").innerHTML =
+    "Execute um SELECT para visualizar os dados.";
+}
+
+
+/*
+==========================================================
+EXECUTAR SQL
+==========================================================
+*/
+
+function executar() {
+
+  const sql = document.getElementById("sql").value.trim();
+
+  if (!sql) {
+    mostrarErro("Digite um comando SQL.");
+    return;
+  }
+
+  try {
+
+    const resultado = db.exec(sql);
+
+    if (resultado.length === 0) {
+
+      document.getElementById("resultado").innerHTML =
+        "<p>Comando executado. Não houve resultado para exibir.</p>";
+
+      mostrarSucesso("SQL executado com sucesso.");
+
+      return;
+    }
+
+    mostrarTabela(resultado[0]);
+
+    mostrarSucesso("SQL executado com sucesso.");
+
+  } catch (erro) {
+
+    mostrarErro("Erro no SQL: " + erro.message);
+  }
+}
+
+
+/*
+==========================================================
+VERIFICAR
+==========================================================
+*/
+
+function verificar() {
+
+  const sql = document.getElementById("sql").value.trim();
+
+  if (!sql) {
+    mostrarErro("Digite um comando SQL.");
+    return;
+  }
+
+  try {
+
+    const resultado = db.exec(sql);
+
+    if (resultado.length === 0) {
+
+      document.getElementById("testes").innerHTML =
+        `<p class="erro">✗ O comando não retornou uma tabela de resultados.</p>`;
+
+      return;
+    }
+
+    const dados = resultado[0];
+
+    mostrarTabela(dados);
+
+    const q = questoes[questaoAtual];
+
+    const passou = compararResultado(
+      dados,
+      q.esperado
+    );
+
+    if (passou) {
+
+      document.getElementById("testes").innerHTML =
+        `<p class="sucesso">✓ Resposta correta!</p>
+         <p>O resultado da sua consulta corresponde ao resultado esperado.</p>`;
+
+    } else {
+
+      document.getElementById("testes").innerHTML =
+        `<p class="erro">✗ Resposta incorreta.</p>
+         <p>O comando foi executado, mas o resultado não corresponde ao esperado.</p>`;
+    }
+
+  } catch (erro) {
+
+    document.getElementById("testes").innerHTML =
+      `<p class="erro">✗ Erro de SQL:</p>
+       <p>${escapeHtml(erro.message)}</p>`;
+  }
+}
+
+
+/*
+==========================================================
+COMPARAÇÃO
+==========================================================
+
+Comparamos o RESULTADO e não o texto SQL.
+
+Assim, estas consultas podem ser consideradas iguais:
+
+SELECT nome FROM produto;
+
+select nome from produto;
+
+SELECT produto.nome FROM produto;
+
+Isso permite que o aluno resolva o problema de diferentes
+formas, desde que produza o resultado correto.
+*/
+
+function compararResultado(atual, esperado) {
+
+  if (!atual) return false;
+
+  if (atual.columns.length !== esperado.colunas.length) {
+    return false;
+  }
+
+  for (let i = 0; i < atual.columns.length; i++) {
+
+    if (
+      atual.columns[i].toLowerCase() !==
+      esperado.colunas[i].toLowerCase()
+    ) {
+      return false;
+    }
+  }
+
+  if (atual.values.length !== esperado.valores.length) {
+    return false;
+  }
+
+  for (let i = 0; i < atual.values.length; i++) {
+
+    for (let j = 0; j < atual.values[i].length; j++) {
+
+      if (
+        String(atual.values[i][j]) !==
+        String(esperado.valores[i][j])
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+
+/*
+==========================================================
+MOSTRAR TABELA
+==========================================================
+*/
+
+function mostrarTabela(resultado) {
+
+  let html = "<table>";
+
+  html += "<thead><tr>";
+
+  resultado.columns.forEach(coluna => {
+    html += `<th>${escapeHtml(coluna)}</th>`;
+  });
+
+  html += "</tr></thead>";
+
+  html += "<tbody>";
+
+  resultado.values.forEach(linha => {
+
+    html += "<tr>";
+
+    linha.forEach(valor => {
+
+      html += `<td>${escapeHtml(valor)}</td>`;
+
+    });
+
+    html += "</tr>";
+  });
+
+  html += "</tbody></table>";
+
+  document.getElementById("resultado").innerHTML = html;
+}
+
+
+/*
+==========================================================
+NAVEGAÇÃO
+==========================================================
+*/
+
+function proxima() {
+
+  if (questaoAtual < questoes.length - 1) {
+
+    questaoAtual++;
+
+    mostrarQuestao();
+  }
+}
+
+
+function anterior() {
+
+  if (questaoAtual > 0) {
+
+    questaoAtual--;
+
+    mostrarQuestao();
+  }
+}
+
+
+/*
+==========================================================
+MENSAGENS
+==========================================================
+*/
+
+function mostrarSucesso(texto) {
+
+  document.getElementById("mensagem").innerHTML =
+    `<p class="sucesso">${escapeHtml(texto)}</p>`;
+}
+
+
+function mostrarErro(texto) {
+
+  document.getElementById("mensagem").innerHTML =
+    `<p class="erro">${escapeHtml(texto)}</p>`;
+}
+
+
+function escapeHtml(valor) {
+
+  return String(valor)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+/*
+==========================================================
+INICIAR
+==========================================================
+*/
+
+iniciarBanco();
+
+</script>
+
+</body>
+</html>
