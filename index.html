@@ -477,6 +477,165 @@ const questoes = [
     }
   }
 
+  {
+    titulo: "Questão 11 - Nomes que começam com M",
+    enunciado:
+      "Liste o nome de todos os produtos cujo nome começa com a letra M.",
+    dica:
+      "Utilize LIKE com o caractere % depois da letra. Exemplo: LIKE 'M%'.",
+    esperado: {
+      colunas: ["nome"],
+      valores: [
+        ["Mouse"],
+        ["Monitor"],
+        ["Microfone"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 12 - Nomes que terminam com E",
+    enunciado:
+      "Liste o nome dos produtos cujo nome termina com a letra 'e'.",
+    dica:
+      "Utilize LIKE com o caractere % antes da letra. Exemplo: LIKE '%e'.",
+    esperado: {
+      colunas: ["nome"],
+      valores: [
+        ["Mouse"],
+        ["Microfone"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 13 - Nome que contém OO",
+    enunciado:
+      "Encontre o produto cujo nome contém a sequência de letras 'oo'.",
+    dica:
+      "Para procurar um trecho em qualquer posição do texto, utilize LIKE '%texto%'.",
+    esperado: {
+      colunas: ["nome"],
+      valores: [
+        ["Notebook"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 14 - Categorias que contêm WARE",
+    enunciado:
+      "Liste o nome e a categoria dos produtos cuja categoria contém a palavra 'ware'.",
+    dica:
+      "Utilize LIKE com % antes e depois do trecho que deseja localizar.",
+    esperado: {
+      colunas: ["nome", "categoria"],
+      valores: [
+        ["Monitor", "Hardware"],
+        ["SSD 480GB", "Hardware"],
+        ["HD 1TB", "Hardware"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 15 - Vendas da cliente Ana",
+    enunciado:
+      "Liste o nome da cliente e a data de todas as vendas realizadas pela cliente Ana.",
+    dica:
+      "Utilize JOIN para relacionar venda e cliente. A ligação é feita por cliente_id e id.",
+    esperado: {
+      colunas: ["nome", "data"],
+      valores: [
+        ["Ana", "2026-10-01"],
+        ["Ana", "2026-10-04"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 16 - Produtos vendidos em quantidade maior ou igual a 2",
+    enunciado:
+      "Liste o nome dos produtos e a quantidade vendida nas vendas em que foram compradas 2 unidades ou mais.",
+    dica:
+      "Relacione venda com produto usando JOIN e filtre a quantidade com WHERE.",
+    esperado: {
+      colunas: ["nome", "quantidade"],
+      valores: [
+        ["Teclado", 2],
+        ["Mouse", 3],
+        ["Headset", 2],
+        ["Webcam", 2],
+        ["HD 1TB", 3]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 17 - Vendas depois de uma data",
+    enunciado:
+      "Liste o número da venda, a data e a quantidade das vendas realizadas depois de 05/10/2026.",
+    dica:
+      "As datas estão armazenadas no formato AAAA-MM-DD. Utilize WHERE com o operador >.",
+    esperado: {
+      colunas: ["id", "data", "quantidade"],
+      valores: [
+        [6, "2026-10-06", 2],
+        [7, "2026-10-07", 1],
+        [8, "2026-10-08", 1],
+        [9, "2026-10-09", 2],
+        [10, "2026-10-10", 3]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 18 - Vendas em um período",
+    enunciado:
+      "Liste o número e a data das vendas realizadas entre 03/10/2026 e 07/10/2026, incluindo as duas datas.",
+    dica:
+      "Utilize duas condições: uma para a data inicial e outra para a data final.",
+    esperado: {
+      colunas: ["id", "data"],
+      valores: [
+        [3, "2026-10-03"],
+        [4, "2026-10-04"],
+        [5, "2026-10-05"],
+        [6, "2026-10-06"],
+        [7, "2026-10-07"]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 19 - Venda realizada em uma data específica",
+    enunciado:
+      "Encontre a data e a quantidade de produtos da venda realizada em 10/10/2026.",
+    dica:
+      "Utilize WHERE para comparar a coluna data com uma data específica entre aspas.",
+    esperado: {
+      colunas: ["data", "quantidade"],
+      valores: [
+        ["2026-10-10", 3]
+      ]
+    }
+  },
+
+  {
+    titulo: "Questão 20 - Vendas de clientes de Brasília após uma data",
+    enunciado:
+      "Liste o nome dos clientes e a data das vendas realizadas por clientes de Brasília depois de 05/10/2026.",
+    dica:
+      "Relacione as tabelas venda e cliente com JOIN. Depois, utilize WHERE para filtrar a cidade e a data.",
+    esperado: {
+      colunas: ["nome", "data"],
+      valores: [
+        ["Eduardo", "2026-10-06"],
+        ["Helena", "2026-10-09"]
+      ]
+    }
+  }
+
 ];
 
 
