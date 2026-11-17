@@ -175,9 +175,9 @@
     </div>
   </div>
 
-  <div class="box" id="areaConclusao" style="display:none;">
+  <div class="box" id="areaConclusao">
     <h2>Atividade concluída</h2>
-    <div id="statusGravacao">Todas as questões foram respondidas corretamente.</div>
+    <div id="statusGravacao">Registre sua pontuação, será gravado quantas questões já foram respondidas.</div>
     <button onclick="registrarPontuacao(questoesConcluidas.filter(Boolean).length)">Tentar registrar novamente</button>
   </div>
 
@@ -214,6 +214,13 @@ CREATE TABLE produto (
     categoria TEXT NOT NULL,
     preco REAL NOT NULL,
     estoque INTEGER NOT NULL
+);
+
+CREATE TABLE aluno (
+    id INTEGER PRIMARY KEY,
+    nome TEXT NOT NULL,
+    turma TEXT NOT NULL,
+    respostas INT
 );
 
 CREATE TABLE cliente (
