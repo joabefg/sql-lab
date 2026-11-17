@@ -7,6 +7,7 @@
 
   <!-- SQL.js: SQLite rodando diretamente no navegador -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.14.2/sql-wasm.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body {
@@ -112,9 +113,9 @@
       padding: 2px 5px;
     }
 
-    #status {
-      font-weight: bold;
-    }
+    #status { font-weight: bold; }
+    .identificacao input { width: 100%; box-sizing: border-box; padding: 10px; margin: 6px 0 12px; }
+    .concluido { background: #e7f7eb; border: 1px solid #8ac99a; padding: 12px; border-radius: 6px; color: #145c27; }
   </style>
 </head>
 
@@ -122,6 +123,15 @@
 
   <h1>SQL Lab</h1>
   <p>Digite comandos SQL e verifique sua resposta.</p>
+
+  <div class="box identificacao">
+    <h2>Identificação do aluno</h2>
+    <label for="nomeAluno">Nome completo:</label>
+    <input id="nomeAluno" type="text" placeholder="Digite seu nome completo" required>
+    <label for="turmaAluno">Turma:</label>
+    <input id="turmaAluno" type="text" placeholder="Ex.: 2º DS" required>
+    <p class="info">Preencha seus dados antes de iniciar. Eles serão usados para registrar sua pontuação.</p>
+  </div>
 
   <div class="box">
     <h2 id="titulo"></h2>
@@ -165,6 +175,12 @@
     </div>
   </div>
 
+  <div class="box" id="areaConclusao" style="display:none;">
+    <h2>Atividade concluída</h2>
+    <div id="statusGravacao">Todas as questões foram respondidas corretamente.</div>
+    <button onclick="registrarPontuacao(questoesConcluidas.filter(Boolean).length)">Tentar registrar novamente</button>
+  </div>
+
 
 <script>
 
@@ -172,6 +188,16 @@ let SQL;
 let db;
 
 let questaoAtual = 0;
+
+// CONFIGURAÇÃO DO SUPABASE:
+// Substitua pelos dados do seu projeto (Project URL e anon/public key).
+const SUPABASE_URL = "COLE_AQUI_A_URL_DO_PROJETO";
+const SUPABASE_ANON_KEY = "COLE_AQUI_A_CHAVE_ANON_PUBLICA";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Cada posição representa uma questão respondida corretamente.
+let questoesConcluidas = Array(20).fill(false);
+let resultadoEnviado = false;
 
 
 /*
@@ -779,9 +805,13 @@ function verificar() {
 
     if (passou) {
 
+      questoesConcluidas[questaoAtual] = true;
+
       document.getElementById("testes").innerHTML =
         `<p class="sucesso">✓ Resposta correta!</p>
          <p>O resultado da sua consulta corresponde ao resultado esperado.</p>`;
+
+      verificarConclusao();
 
     } else {
 
@@ -798,6 +828,71 @@ function verificar() {
   }
 }
 
+
+/*
+==========================================================
+CONCLUSÃO E REGISTRO DA PONTUAÇÃO
+==========================================================
+*/
+
+async function verificarConclusao() {
+  const totalConcluidas = questoesConcluidas.filter(Boolean).length;
+
+  if (totalConcluidas === questoes.length && !resultadoEnviado) {
+    await registrarPontuacao(totalConcluidas);
+  }
+}
+
+async function registrarPontuacao(pontuacao) {
+  if (resultadoEnviado) return;
+
+  const nome = document.getElementById("nomeAluno").value.trim();
+  const turma = document.getElementById("turmaAluno").value.trim();
+  const status = document.getElementById("statusGravacao");
+  const area = document.getElementById("areaConclusao");
+
+  if (!nome || !turma) {
+    alert("Preencha seu nome completo e sua turma antes de concluir a atividade.");
+    document.getElementById("nomeAluno").focus();
+    return;
+  }
+
+  if (
+    SUPABASE_URL === "COLE_AQUI_A_URL_DO_PROJETO" ||
+    SUPABASE_ANON_KEY === "COLE_AQUI_A_CHAVE_ANON_PUBLICA"
+  ) {
+    area.style.display = "block";
+    status.innerHTML = '<p class="erro">A atividade foi concluída, mas o Supabase ainda não foi configurado pelo professor.</p>';
+    return;
+  }
+
+  status.textContent = "Registrando sua pontuação...";
+  area.style.display = "block";
+
+  const { error } = await supabaseClient
+    .from("aluno")
+    .insert([{
+      nome: nome,
+      turma: turma,
+      atividade: "SQL Lab - Banco de Dados",
+      pontuacao: pontuacao,
+      total_questoes: questoes.length
+    }]);
+
+  if (error) {
+    console.error("Erro ao registrar pontuação:", error);
+    status.innerHTML = '<p class="erro">Não foi possível registrar sua pontuação. Avise o professor e tente novamente.</p>';
+    return;
+  }
+
+  resultadoEnviado = true;
+  status.innerHTML = `<div class="concluido">
+    <strong>Parabéns, ${escapeHtml(nome)}!</strong><br>
+    Sua pontuação foi registrada: ${pontuacao} de ${questoes.length} questões.
+  </div>`;
+  const botaoTentar = area.querySelector("button");
+  if (botaoTentar) botaoTentar.disabled = true;
+}
 
 /*
 ==========================================================
