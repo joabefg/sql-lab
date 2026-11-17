@@ -22,3 +22,7 @@ A aplicação usa SQL.js para executar SQLite no navegador.
 ## Observação
 
 Esta V1 usa o arquivo SQL.js hospedado por CDN. Para uma versão totalmente independente da internet, os arquivos `sql-wasm.js` e `sql-wasm.wasm` podem ser colocados em uma pasta `libs/`.
+
+
+Senha banco:
+tYVTsYCiRi32BGqb
