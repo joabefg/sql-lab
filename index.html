@@ -126,10 +126,15 @@
 
   <div class="box identificacao">
     <h2>Identificação do aluno</h2>
-    <label for="nomeAluno">Nome completo:</label>
-    <input id="nomeAluno" type="text" placeholder="Digite seu nome completo" required>
-    <label for="turmaAluno">Turma:</label>
-    <input id="turmaAluno" type="text" placeholder="Ex.: 2º DS" required>
+    <div style="width: 40%;">
+      <label for="nomeAluno">Nome completo:</label>
+      <input id="nomeAluno" type="text" placeholder="Digite seu nome completo" required>
+    </div>
+    
+    <div style="width: 40%;">
+      <label for="turmaAluno">Turma:</label>
+      <input id="turmaAluno" type="text" placeholder="Ex.: 2º DS" required>
+    </div>
     <p class="info">Preencha seus dados antes de iniciar. Eles serão usados para registrar sua pontuação.</p>
   </div>
 
@@ -148,12 +153,10 @@
     <br>
 
     <button onclick="executar()">Executar SQL</button>
-    <button onclick="verificar()">Verificar resposta</button>
+    
 
     <div id="mensagem"></div>
-  </div>
 
-  <div class="box">
     <h2>Resultado da consulta</h2>
     <div id="resultado">
       Execute um SELECT para visualizar os dados.
@@ -161,7 +164,7 @@
   </div>
 
   <div class="box">
-    <h2>Testes</h2>
+    <button onclick="verificar()">Verificar resposta</button>
     <div id="testes">
       A resposta ainda não foi verificada.
     </div>
@@ -178,7 +181,7 @@
   <div class="box" id="areaConclusao">
     <h2>Atividade concluída</h2>
     <div id="statusGravacao">Registre sua pontuação, será gravado quantas questões já foram respondidas.</div>
-    <button onclick="registrarPontuacao(questoesConcluidas.filter(Boolean).length)">Tentar registrar novamente</button>
+    <button onclick="registrarPontuacao(questoesConcluidas.filter(Boolean).length)">Registrar Tentativa</button>
   </div>
 
 
@@ -478,7 +481,7 @@ const questoes = [
       "Descubra quantos produtos existem na tabela produto.",
 
     dica:
-      "Utilize COUNT.",
+      "Utilize COUNT. Use também o alias 'quantidade'. ",
 
     esperado: {
       colunas: ["quantidade"],
